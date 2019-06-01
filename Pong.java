@@ -2,7 +2,6 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics2D;
-import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.util.Random;
 
@@ -10,36 +9,23 @@ import javax.swing.JOptionPane;
 
 /**
  * @author David Santamaria
- * @version 0.5.7 Several minor bug fixes and optimizations. Tons of Javadocs
- *          everywhere!
+ * @version 0.6.0 Bug fixes, made code more readable, fixed borders with fullscreen.
+ * 
  */
 
 public class Pong {
 
-	public static void main(String[] args) {
-		Engine.main(args);
-	}
-
 	// Objects
 	Ball ball = new Ball();
-	Player p1 = new Player(10, screenHeight / 2);
-	Player p2 = new Player(screenWidth - Player.size.width - 10, screenHeight / 2);
-
-	// ScreenWidth and screenHeight
-	public static int screenWidth = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
-	public static int screenHeight = (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight();
+	Player p1 = new Player(10, Engine.screenSize.getHeight() / 2);
+	Player p2 = new Player(Engine.screenSize.getWidth() - Player.size.width - 10, Engine.screenSize.getHeight() / 2);
 
 	public String difficulty;
-
-	public Pong(String difficulty) {
-		this.difficulty = difficulty;
-		evaluateDifficulty();
-	}
+	private int p1scale = 1;
+	private int p2scale = 1;
 
 	/** Sets default difficulty at medium **/
-	public Pong() {
-		this("medium");
-	}
+	public Pong() {}
 
 	// Score-related variables
 	static int p1score = 0;
@@ -48,44 +34,33 @@ public class Pong {
 
 	/** Renders everything that needs rendering **/
 	public void renderAllPong(Graphics2D g) {
-		// Note to self: frame.setBackground(Color.Black) does NOT work unless
-		// you want to feel like you're on drugs
-
 		// Background
 		g.setColor(Color.BLACK);
-		g.fillRect(0, 0, screenWidth, screenHeight);
-
-		// Ball
+		g.fillRect(0, 0, Engine.screenSize.getWidth(), Engine.screenSize.getHeight());
 		g.setColor(Color.WHITE);
+		
+		// Ball
 		g.fillOval(ball.x, ball.y, ball.size.width, ball.size.height);
 
 		/* Displaying score */
 		g.setFont(new Font("Arial", 1, 75));
-		g.setColor(Color.WHITE);
-		g.drawString(String.valueOf(Pong.p1score), screenWidth / 2 - 150, 100);
-		g.setColor(Color.WHITE);
-		g.drawString(String.valueOf(Pong.p2score), screenWidth / 2 + 100, 100);
-
+		g.drawString(String.valueOf(Pong.p1score), Engine.screenSize.getWidth() / 2 - 150, 100);
+		g.drawString(String.valueOf(Pong.p2score), Engine.screenSize.getWidth() / 2 + 100, 100);
+		
 		// Middle border
-		g.setColor(Color.WHITE);
-		g.fillRect(screenWidth / 2, 0, 10, screenHeight);
+		g.fillRect(Engine.screenSize.getWidth() / 2, 30, 10, Engine.screenSize.getHeight() - 60);
 
 		// Middle circle
-		g.setColor(Color.WHITE);
-		g.drawOval(screenWidth / 2 - 250, screenHeight / 2 - 250, 500, 500);
+		g.drawOval(Engine.screenSize.getWidth() / 2 - 250, Engine.screenSize.getHeight() / 2 - 250, 500, 500);
 
 		// Top and bottom borders
-		g.setColor(Color.WHITE);
-		g.fillRect(0, 30, screenWidth, 10);
-		g.setColor(Color.WHITE);
-		g.fillRect(0, screenHeight - 15, screenWidth, 10);
+		g.fillRect(0, 30, Engine.screenSize.getWidth(), 10);
+		g.fillRect(0, Engine.screenSize.getHeight() - 35, Engine.screenSize.getWidth(), 10);
 
 		// Player 1, the box to the right of the screen
-		g.setColor(Color.WHITE);
 		g.fillRect(p1.x, p1.y, Player.size.width, Player.size.height);
 
 		// Player 2, to the left
-		g.setColor(Color.WHITE);
 		g.fillRect(p2.x, p2.y, Player.size.width, Player.size.height);
 
 	}
@@ -101,63 +76,41 @@ public class Pong {
 	}
 
 	/** Evaluates the games stats depending on the difficulty **/
-	private void evaluateDifficulty() {
-		switch (difficulty) {
-		case "easy":
-			Player.size.setSize(40, 200);
-			Player.setSpeed(5);
-			ball.size.setSize(50, 50);
-			ball.YMAX = 15;
-			ball.XMAX = 15;
-			break;
-
-		case "medium":
-			Player.size.setSize(30, 150);
-			Player.setSpeed(8);
-			ball.size.setSize(30, 30);
-			ball.YMAX = 28;
-			ball.XMAX = 28;
-			break;
-
-		case "hard":
-			Player.size.setSize(20, 100);
-			Player.setSpeed(12);
-			ball.size.setSize(15, 15);
-			ball.YMAX = 40;
-			ball.XMAX = 40;
-			break;
-
-		case "impossible":
-			Player.size.setSize(10, 50);
-			Player.setSpeed(15);
-			ball.size.setSize(10, 10);
-			ball.YMAX = 40;
-			ball.XMAX = 40;
-			break;
-		}
-	}
 
 	/** updates the position of the players **/
 	private void updatePosition() {
 
+		// Boost player 1 speed
+		if (InputHandler.handler.isKeyDown(KeyEvent.VK_SHIFT)) {
+			p1scale = 3;
+		} else {
+			p1scale = 1;
+		}
+
+		if (InputHandler.handler.isKeyDown(KeyEvent.VK_CONTROL)) {
+			p2scale = 3;
+		} else {
+			p2scale = 1;
+		}
+
 		// Changes player's Y values (up) based on the arguments
 		if (InputHandler.handler.isKeyDown(KeyEvent.VK_W)) {
 			// Keeps the player within boundaries
-			if (p1.y > 10)
-				p1.y -= Player.speed;
+			if (p1.y > 40)
+				p1.y -= Player.speed * p1scale;
 		}
 		if (InputHandler.handler.isKeyDown(KeyEvent.VK_UP)) {
-			if (p2.y > 10)
-				p2.y -= Player.speed;
+			if (p2.y > 40)
+				p2.y -= Player.speed * p2scale;
 		}
 
 		if (InputHandler.handler.isKeyDown(KeyEvent.VK_S)) {
-			if (p1.y < screenHeight - Player.size.height)
-				p1.y += Player.speed;
+			if (p1.y < Engine.screenSize.getHeight() - Player.size.height - 30)
+				p1.y += Player.speed * p1scale;
 		}
 		if (InputHandler.handler.isKeyDown(KeyEvent.VK_DOWN)) {
-			if (p2.y < screenHeight - Player.size.height)
-				p2.y += Player.speed;
+			if (p2.y < Engine.screenSize.getHeight() - Player.size.height - 30)
+				p2.y += Player.speed * p2scale;
 		}
 		if (InputHandler.handler.isKeyDown(KeyEvent.VK_ESCAPE)) {
 			System.exit(-1);
@@ -176,14 +129,13 @@ public class Pong {
 			ball.xspeed = Math.abs(ball.xspeed);
 
 			SoundHandler.handler.playSound(SoundHandler.BOUNCE);
-			
+
 			// If it hits top of player
 			if (ball.centery <= p1.y + (Player.size.height / 5)) {
 				ball.yspeed -= 4;
 			} else if (ball.centery <= p1.y + (Player.size.height / 2.5)) {
 				ball.yspeed--;
 			} else if (ball.centery <= p1.y + (Player.size.height / 2)) {
-				// afoinfa
 			} else if (ball.centery <= p1.y + (Player.size.height / 1.5)) {
 				ball.xspeed++;
 			} else if (ball.centery <= p1.y + (Player.size.height / 1.2)) {
@@ -200,7 +152,7 @@ public class Pong {
 			ball.xspeed = -Math.abs(ball.xspeed);
 
 			SoundHandler.handler.playSound(SoundHandler.BOUNCE);
-			
+
 			if (ball.centery <= p2.y + (Player.size.height / 5)) {
 				ball.yspeed -= 4;
 			} else if (ball.centery <= p2.y + (Player.size.height / 2.5)) {
@@ -218,8 +170,8 @@ public class Pong {
 	}
 
 	/**
-	 * Checks if either one of the player's score is at or above the winning
-	 * score number
+	 * Checks if either one of the player's score is at or above the winning score
+	 * number
 	 */
 	private void checkScore() {
 
@@ -257,17 +209,16 @@ public class Pong {
 		p2score = 0;
 
 		// Resets positions
-		p1.y = screenHeight / 2 - 100;
-		p2.y = screenHeight / 2 - 100;
+		p1.y = Engine.screenSize.getHeight() / 2 - 100;
+		p2.y = Engine.screenSize.getHeight() / 2 - 100;
 	}
 
 	/**
 	 * 
-	 * @param player
-	 *            Integer player used to symbolize player 1 or player 2
-	 * @return True if the <code> x </code> and <code> y </code> coordinates of
-	 *         the ball are within the boundaries of the player's
-	 *         <code> x </code> and <code> y </code> coordinates
+	 * @param player Integer player used to symbolize player 1 or player 2
+	 * @return True if the <code> x </code> and <code> y </code> coordinates of the
+	 *         ball are within the boundaries of the player's <code> x </code> and
+	 *         <code> y </code> coordinates
 	 */
 	boolean ballIsWithinBoundariesOfPlayer(int player) {
 		switch (player) {
@@ -280,7 +231,6 @@ public class Pong {
 		}
 		return false;
 	}
-
 }
 
 /**
@@ -292,9 +242,9 @@ class Ball {
 	Dimension size = new Dimension(30, 30);
 
 	/** Screen Width **/
-	int screenWidth = Pong.screenWidth;
+	int screenWidth = Engine.screenSize.getWidth();
 	/** Screen Height **/
-	int screenHeight = Pong.screenHeight;
+	int screenHeight = Engine.screenSize.getHeight();
 
 	/** Coordinate x value **/
 	public int x = screenWidth / 2;
@@ -304,19 +254,19 @@ class Ball {
 	/**
 	 * Center coordinate x value of the ball The CENTER of the ball is used for
 	 * collision detection rather than the x and y values to make the collision
-	 * detection less buggy. Since the <code> Graphics2D </code> draws an oval
-	 * (the ball) from the top left position, it would be less realistic to only
-	 * have collision detection on that one point at the top left corner of the
-	 * ball instead of the center
+	 * detection less buggy. Since the <code> Graphics2D </code> draws an oval (the
+	 * ball) from the top left position, it would be less realistic to only have
+	 * collision detection on that one point at the top left corner of the ball
+	 * instead of the center
 	 **/
 	public int centerx = x + (size.width / 2);
 	/**
 	 * Center coordinate y value of the ball The CENTER of the ball is used for
 	 * collision detection rather than the x and y values to make the collision
-	 * detection less buggy. Since the <code> Graphics2D </code> draws an oval
-	 * (the ball) from the top left position, it would be less realistic to only
-	 * have collision detection on that one point at the top left corner of the
-	 * ball instead of the center
+	 * detection less buggy. Since the <code> Graphics2D </code> draws an oval (the
+	 * ball) from the top left position, it would be less realistic to only have
+	 * collision detection on that one point at the top left corner of the ball
+	 * instead of the center
 	 **/
 	public int centery = y + (size.height / 2);
 
@@ -326,9 +276,9 @@ class Ball {
 	public int yspeed = 0;
 
 	/** Maximum X speed **/
-	public int YMAX = 20;
+	public int YMAX = 15;
 	/** Maximum Y speed **/
-	public int XMAX = 28;
+	public int XMAX = 15;
 
 	/** Update everything that needs to be updated every tick **/
 	public void updateAll() {
@@ -339,8 +289,8 @@ class Ball {
 	}
 
 	/**
-	 * Resets the ball's x and y values with <code> initx </code>, adding a
-	 * random value to <code> xspeed </code> and <code> yspeed</code>
+	 * Resets the ball's x and y values with <code> initx </code>, adding a random
+	 * value to <code> xspeed </code> and <code> yspeed</code>
 	 */
 	private void spawn() {
 		Random r = new Random();
@@ -351,9 +301,13 @@ class Ball {
 		x = screenWidth / 2;
 		y = screenHeight / 2;
 		updateCenter();
-		int initx = r.nextInt(2);
-		xspeed = (initx == 0) ? 5 : -5;
-		yspeed = r.nextInt(11) + (-5);
+
+		xspeed = r.nextInt(XMAX / 2) + 5;
+		yspeed = r.nextInt(YMAX / 2) + 5;
+		if (xspeed > XMAX)
+			xspeed = XMAX;
+		if (yspeed > YMAX)
+			yspeed = YMAX;
 	}
 
 	/**
@@ -386,11 +340,10 @@ class Ball {
 	 * Keeps the vall within the uppper and lower limit of the screen using
 	 * <code> screenHeight </code>
 	 * 
-	 * @return Negative <code>yspeed </code>if <code> yspeed</code> is out of
-	 *         bounds
+	 * @return Negative <code>yspeed </code>if <code> yspeed</code> is out of bounds
 	 */
 	private void keepInBounds() {
-		if (y < 10 || centery >= screenHeight) {
+		if (y < 40 || centery >= screenHeight - 40) {
 			yspeed = -yspeed;
 			SoundHandler.handler.playSound(SoundHandler.BOUNCE);
 		}
@@ -430,14 +383,15 @@ class Player {
 	/** Coordinate y value of the player **/
 	public int y;
 
+	private static int DEFAULT_WIDTH = 30;
+	private static int DEFAULT_HEIGHT = 200;
+
 	/**
-	 * Sets the instance's <code> x </code> and <code> y </code> variables
-	 * equals to the parameters
+	 * Sets the instance's <code> x </code> and <code> y </code> variables equals to
+	 * the parameters
 	 * 
-	 * @param x
-	 *            Player's x-coordinate
-	 * @param y
-	 *            Player's y-coordinate
+	 * @param x Player's x-coordinate
+	 * @param y Player's y-coordinate
 	 */
 	public Player(int x, int y) {
 		this.x = x;
@@ -447,19 +401,17 @@ class Player {
 	/**
 	 * Used for simplicity when calling the player's <code> size </code>
 	 */
-	static Dimension size = new Dimension(30, 150);
+	static Dimension size = new Dimension(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 
 	/**
-	 * How fast the player moves across the screen
+	 * Speed of the player
 	 */
 	static int speed = 8;
 
 	/**
-	 * Sets the speed of the players (notice - Player<b>s</b> not player) to the
-	 * new speed
+	 * Sets player speed
 	 * 
-	 * @param speed
-	 *            Value of the new speed
+	 * @param speed Value of the new speed
 	 */
 	public static void setSpeed(int speed) {
 		Player.speed = speed;

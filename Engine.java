@@ -1,31 +1,56 @@
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 
 import javax.swing.JFrame;
-import javax.swing.JOptionPane;
 
 /**
  * @author David Santamaria
- * @version 0.2.6 Contains everything necessary to update and render a game.
- *          Contains a <code> clock </code> that updates and renders for every
- *          in-game tick. Ticks and fps are now shown on-screen during play
+ * @version 0.2.7 Removed irrelevant code and made general improvements to
+ *          structure Contains a <code> clock </code> that updates and renders
+ *          for every in-game tick. Ticks and fps are now shown on-screen during
+ *          play
  */
+
+class Dimension {
+	public Dimension(int width, int height) {
+		this.width = width;
+		this.height = height;
+	}
+
+	public int width;
+	public int height;
+
+	public int getWidth() {
+		return width;
+	}
+
+	public int getHeight() {
+		return height;
+	}
+}
+
 public class Engine {
 
+	// Global constants
+	public static Dimension screenSize = new Dimension((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth(),
+			(int) Toolkit.getDefaultToolkit().getScreenSize().getHeight());
+	final static GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0];
+
+	
 	int fps = 150;
-	public static boolean paused = false;
-	int gameWidth = (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth();
-	int gameHeight = (int) Toolkit.getDefaultToolkit().getScreenSize().getHeight();
+
+	public static boolean paused;
 	static String stats = "";
 
 	private Pong pong = new Pong();
-	JFrame frame;
+	private JFrame frame;
 	InputHandler handler;
 	static Graphics g2;
 	static Graphics2D g2d;
@@ -53,18 +78,19 @@ public class Engine {
 		// Big Objects
 		sHandler = SoundHandler.getNewScoreHandler(null);
 
-		// Window stuf
+		// Initialize frame and set it to full screen mode by default
+		
 		frame = new JFrame("Game");
-		frame.setSize(new Dimension(gameWidth, gameHeight));
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+		frame.setUndecorated(true);
+		device.setFullScreenWindow(frame);
 		frame.setVisible(true);
-		frame.setPreferredSize(new Dimension(gameWidth - 30, gameHeight - 30));
 
 		// Objects
 		handler = new InputHandler(frame);
 
 		// Graphics Stuff
-		i = new BufferedImage(gameWidth, gameHeight, BufferedImage.TYPE_INT_RGB);
+		i = new BufferedImage(screenSize.getWidth(), screenSize.getHeight(), BufferedImage.TYPE_INT_RGB);
 		g2d = i.createGraphics();
 		g2 = frame.getGraphics();
 	}
@@ -112,24 +138,6 @@ public class Engine {
 				if (seconds > 59) {
 					seconds %= 60;
 					minutes++;
-				}
-				if (minutes > 59) {
-					minutes %= 60;
-					hours++;
-				}
-				if (hours > 23) {
-					spam("Pong must be your favorite game... You know what's mine? Hide and seek with your body and the cops",
-							100);
-					ticks = 6;
-					fps = 6;
-					seconds = 6;
-					minutes = 6;
-					hours = 6;
-					JOptionPane.showMessageDialog(null, "You shouldn't have done that");
-					stats = "Ticks: " + ticks + ", FPS: " + fps + ", " + seconds + ":" + minutes + ":" + hours;
-					render();
-					paused = true;
-					pause();
 				}
 
 				stats = "Ticks: " + ticks + ", FPS: " + fps + ", " + seconds + ":" + minutes + ":" + hours;

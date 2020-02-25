@@ -29,7 +29,7 @@ public class SoundHandler {
 	
 	
 	public SoundHandler() {
-		this("C:/Sounds/");
+		this("sounds/");
 	}
 	
 	public SoundHandler(String dirPrefixIn) {

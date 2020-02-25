@@ -71,7 +71,7 @@ public class Engine {
 		System.exit(-1);
 	}
 
-	/**
+	/**	
 	 * Initializes variables
 	 */
 	void initialize() {

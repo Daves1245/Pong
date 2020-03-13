@@ -1,5 +1,6 @@
 import java.net.*;
 import java.io.*;
+import java.util.ArrayList;
 
 public class server {
 
@@ -68,6 +69,6 @@ public class server {
 }
 
 class ClientPair {
-  public InetAddr first;
-  public InetAddr second;
+  public InetAddress first;
+  public InetAddress second;
 }

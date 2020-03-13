@@ -9,6 +9,7 @@ public class server {
   /* Helpful global variables */
   private static final int BUFF_SIZE = 256;
   private byte[] buff = new byte[BUFF_SIZE]; 
+  private ArrayList<ClientPair> conns;
 
   /* Connection establishing resources */
   private DatagramSocket server = null;
@@ -64,4 +65,9 @@ public class server {
     server s = new server();
     s.run();
   }
+}
+
+class ClientPair {
+  public InetAddr first;
+  public InetAddr second;
 }
